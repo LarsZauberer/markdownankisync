@@ -1,3 +1,4 @@
+use markdownankisync::anki::Card;
 use markdownankisync::{api::get_decks, renderer::render};
 
 fn main() {
@@ -19,5 +20,11 @@ fn main() {
     [source](assets/imgs/asdf.jpeg)"
             )
         ) */
-    println!("{:?}", get_decks());
+    println!(
+        "{:?}",
+        Card::new(
+            "This is some front text",
+            "This is some back text <br> $$a^2 + b^2 = c^2$$"
+        )
+    );
 }

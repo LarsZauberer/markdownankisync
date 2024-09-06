@@ -1,7 +1,8 @@
+use crate::api::*;
 use crate::renderer::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Card {
     pub id: usize,
     pub front: String,
@@ -10,22 +11,22 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str) -> Card {
+    pub fn new(front: &str, back: &str) -> Result<Card, String> {
         let mut front_media: Vec<Image> = extract_images(front);
         let mut back_media: Vec<Image> = extract_images(back);
 
         front_media.append(&mut back_media);
 
-        let new_card: Card = Card {
+        let mut new_card: Card = Card {
             id: 0,
             front: render(front),
             back: render(back),
             media: front_media,
         };
 
-        // TODO: Upload new_card
+        // TODO: Send Media data to the Media Store
 
-        new_card
+        add_note(&new_card, "Test")
     }
     pub fn update_card(&self, front: &str, back: &str) -> bool {
         // TODO: Implement
@@ -33,14 +34,16 @@ impl Card {
     }
     pub fn get(id: usize) -> Option<Card> {
         // TODO: Implement
+        // TODO: Check if even necessary
         None
     }
     pub fn exists(id: usize) -> bool {
         Self::get(id).is_some()
+        // TODO: Check if even necessary
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Image {
     pub filename: String,
     pub data: String, // Has to be base64
