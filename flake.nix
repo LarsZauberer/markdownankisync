@@ -13,7 +13,11 @@
   }:
     flake-utils.lib.eachDefaultSystem (
       system: let
-        pkgs = import nixpkgs {inherit system;};
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
         bi = with pkgs; [
           cargo
           rustc
@@ -26,9 +30,12 @@
           openssl
         ];
         clang_path = "${pkgs.llvmPackages.libclang.lib}/lib";
+        dev_tools = with pkgs; [
+          postman
+        ];
       in {
         devShell = pkgs.mkShell {
-          buildInputs = bi;
+          buildInputs = bi ++ dev_tools;
           LIBCLANG_PATH = clang_path;
         };
       }
