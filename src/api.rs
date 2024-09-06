@@ -5,15 +5,22 @@ pub fn add_note(card: Card, deck: &str) {}
 
 pub fn get_decks() -> Result<Vec<String>, String> {
     let resp = requests::GetDecks::build().send();
-    // TODO: Make the error handling smoother
+
     if let Ok(res) = resp {
+        // Deserialize response
         let text: &str = &res.text().unwrap();
         let get_decks_resp: responses::GetDecks =
             from_str(text).expect("Failed to read response json to GetDecks struct");
-        Ok(get_decks_resp.result.unwrap())
+
+        // Check if there is an error in response
+        if get_decks_resp.error.is_some() {
+            Err(get_decks_resp.error.unwrap().to_string())
+        } else {
+            Ok(get_decks_resp.result.unwrap())
+        }
     } else {
-        let res = resp.unwrap_err();
-        Err(res.to_string())
+        // Erorr while connecting to the server
+        Err(resp.unwrap_err().to_string())
     }
 }
 
