@@ -11,13 +11,21 @@ pub struct Card {
 
 impl Card {
     pub fn new(front: &str, back: &str) -> Card {
-        // TODO: Implement
-        Card {
+        let mut front_media: Vec<Image> = extract_images(front);
+        let mut back_media: Vec<Image> = extract_images(back);
+
+        front_media.append(&mut back_media);
+
+        let new_card: Card = Card {
             id: 0,
             front: render(front),
             back: render(back),
-            media: vec![],
-        }
+            media: front_media,
+        };
+
+        // TODO: Upload new_card
+
+        new_card
     }
     pub fn update_card(&self, front: &str, back: &str) -> bool {
         // TODO: Implement
