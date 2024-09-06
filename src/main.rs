@@ -1,9 +1,9 @@
-use markdownankisync::anki::{convert_to_renderable, Card};
+use markdownankisync::renderer::render;
 
 fn main() {
     println!(
         "{}",
-        convert_to_renderable(
+        render(
             "# Hello World #card 
 
 \\[a^2 + b^2 = c^2\\]
