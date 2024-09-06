@@ -1,0 +1,12 @@
+[package]
+name = "markdownankisync"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+image-base64 = "0.1.0"
+log = "0.4.22"
+markdown = "1.0.0-alpha.20"
+regex = "1.10.6"
+reqwest = { version = "0.12.7", features = ["blocking"] }
+serde = { version = "1.0.209", features = ["derive"] }
