@@ -23,8 +23,8 @@ fn main() {
     println!(
         "{:?}",
         Card::new(
-            "This is some front text",
-            "This is some back text <br> $$a^2 + b^2 = c^2$$"
+            "This is some front text 7",
+            "This is some back text <br> $$a^2 + b^2 = c^2$$ <br> [source](Rust%20Serde.md)"
         )
     );
 }

@@ -11,6 +11,10 @@ pub fn render(text: &str) -> String {
     // Handle images
     text = convert_image_links(&text);
 
+    // Handle links
+    // TODO: Make the workspace path variable
+    text = convert_links(&text, "/home/lars/Nextcloud/main-obsidian");
+
     // Math handle
     text = convert_math(&text);
 
@@ -44,7 +48,7 @@ pub fn extract_images(text: &str) -> Vec<Image> {
 }
 
 /// Converts all the image links to html images in a certain text
-pub fn convert_image_links(text: &str) -> String {
+fn convert_image_links(text: &str) -> String {
     let re = get_image_link_regex();
     re.replace_all(text, "<img src='$2'>").to_string()
 }
@@ -66,4 +70,16 @@ fn convert_math(text: &str) -> String {
 /// and one for the image path
 fn get_image_link_regex() -> Regex {
     Regex::new(r"\[.*\]\(((?:.*\/)*(.*(?:(?:\.png)|(?:\.jpeg))))\)").unwrap()
+}
+
+/// Converts all the links into absolute html links for anki to handle
+fn convert_links(text: &str, absolute_path: &str) -> String {
+    // This regex has 3 captureing groups one everything before the relative path, the relative
+    // path itself and everything after
+    let re: Regex = Regex::new(r"\[(.*)\]\((.*.md)\)").unwrap();
+    re.replace_all(
+        &text,
+        format!("<a href=\"file:/{}/${{2}}\">${{1}}</a>", absolute_path),
+    )
+    .to_string()
 }
