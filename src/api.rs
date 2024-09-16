@@ -47,6 +47,26 @@ pub fn get_decks() -> Result<Vec<String>, String> {
     }
 }
 
+pub fn get_notes() -> Result<Vec<Card>, String> {
+    Err("Not implemented yet".to_string())
+}
+
+pub fn get_note() -> Result<Card, String> {
+    let res: Result<Vec<Card>, String> = get_notes();
+    if res.is_ok() {
+        let result: Vec<Card> = res.unwrap();
+        if result.len() == 1 {
+            Ok(result[0].clone()) // Is it possible without the clone?
+        } else if result.len() == 0 {
+            Err(String::from("404"))
+        } else {
+            Err(String::from("Overflow"))
+        }
+    } else {
+        Err(res.unwrap_err())
+    }
+}
+
 pub mod responses {
     use serde::{Deserialize, Serialize};
 

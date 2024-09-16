@@ -13,3 +13,16 @@ Math substitutions are: $ -> \[ and $$ -> \(
 A mardown to HTML converter might be necessary so that everything is displayed correctly in the card
 
 Images need to be uploaded first to `storeMediaFile` and then we can use it in the card.
+
+## Roadmap
+
+### Quick Editor
+
+To enable quick writing and editing notes there should be a simple rust rewrite of the Anki editor.
+
+Features:
+
+- No media
+- Hiragana support
+- Bulk adding notes
+- Editing single notes

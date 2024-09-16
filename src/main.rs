@@ -1,30 +1,22 @@
+use clap::Parser;
 use markdownankisync::anki::Card;
+use markdownankisync::tui::CLI::CLI;
 use markdownankisync::{api::get_decks, renderer::render};
 
 fn main() {
-    /* println!(
-            "{}",
-            render(
-                "# Hello World #card
+    let cli: CLI = CLI::parse();
 
-    \\[a^2 + b^2 = c^2\\]
-
-    $$a^2 + b^2$$
-
-    $$a + b = c$$
-
-    $a^2$
-
-    [source](imgs/something.jpeg)
-
-    [source](assets/imgs/asdf.jpeg)"
-            )
-        ) */
-    println!(
-        "{:?}",
-        Card::new(
-            "This is some front text 7",
-            "This is some back text <br> $$a^2 + b^2 = c^2$$ <br> [source](Rust%20Serde.md)"
-        )
-    );
+    // Since the nothing except the quick mode is implemented yet. It will force the quick mode to
+    // be used
+    if cli.filter.len() > 0 {
+        search_edit(&cli.filter);
+    } else {
+        bulk_add();
+    }
 }
+
+fn bulk_add() {
+    println!("Not implemented yet");
+}
+
+fn search_edit(filter: &str) {}
