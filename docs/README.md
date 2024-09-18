@@ -10,9 +10,21 @@ The card id will be added as an HTML comment at the end of the card. If the id i
 
 Math substitutions are: $ -> \[ and $$ -> \(
 
-A mardown to HTML converter might be necessary so that everything is displayed correctly in the card
+Links to other files are replaced with a correct absolute path to the file.
 
 Images need to be uploaded first to `storeMediaFile` and then we can use it in the card.
+
+### Card Types
+
+> Fact/Situation:
+>
+> Anki creates for card types that have 2 cards (e.g. the "and reverse" type) two different cards with two different ids. But these cards are linked in some way.
+
+The app will create for all the double card types two seperate basic cards that are linked by a seperate internal structure that holds two objects of type `Card`.
+
+#### Card Type Regex
+
+- [ ] WIP
 
 ## Roadmap
 
@@ -26,3 +38,7 @@ Features:
 - Hiragana support
 - Bulk adding notes
 - Editing single notes
+- Card Types
+  - Basic
+  - Input
+  - Reverse
