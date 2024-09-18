@@ -47,12 +47,30 @@ pub fn get_decks() -> Result<Vec<String>, String> {
     }
 }
 
-pub fn get_notes() -> Result<Vec<Card>, String> {
-    Err("Not implemented yet".to_string())
+pub fn get_notes(query: &str) -> Result<Vec<Card>, String> {
+    let resp = requests::GetNotes::build(query).send();
+
+    if let Ok(res) = resp {
+        // Deserialze response
+        let text: &str = &res.text().unwrap();
+        let get_notes_resp: responses::GetNotes =
+            from_str(text).expect("Failed to read response json to GetNotes struct");
+
+        // Check if there is an error in response
+        // FIX: This doesn't throw out a `Card`
+        if get_notes_resp.error.is_some() {
+            Err(get_notes_resp.error.unwrap().to_string())
+        } else {
+            Ok(get_notes_resp.result.unwrap())
+        }
+    } else {
+        // Error while connecting to the server
+        Err(resp.unwrap_err().to_string())
+    }
 }
 
-pub fn get_note() -> Result<Card, String> {
-    let res: Result<Vec<Card>, String> = get_notes();
+pub fn get_note(query: &str) -> Result<Card, String> {
+    let res: Result<Vec<Card>, String> = get_notes(query);
     if res.is_ok() {
         let result: Vec<Card> = res.unwrap();
         if result.len() == 1 {
@@ -64,6 +82,32 @@ pub fn get_note() -> Result<Card, String> {
         }
     } else {
         Err(res.unwrap_err())
+    }
+}
+
+pub fn get_cards_from_ids(cards: &mut [Card]) -> Result<Vec<Card>, String> {
+    let ids: Vec<usize> = Vec::with_capacity(cards.len());
+    for i in cards {
+        ids.push(i.id);
+    }
+    let resp = requests::GetCardsFromIDs::build(ids).send();
+
+    if let Ok(res) = resp {
+        // Deserialze response
+        let text: &str = &res.text().unwrap();
+        let get_notes_resp: responses::GetCardsFromIDs =
+            from_str(text).expect("Failed to read response json to GetCardsFromIDs struct");
+
+        // Check if there is an error in response
+        if get_notes_resp.error.is_some() {
+            Err(get_notes_resp.error.unwrap().to_string())
+        } else {
+            let notes: Vec<CardResponse> = get_notes_resp.unwrap();
+            for i in 0..get_notes_resp.len() {}
+        }
+    } else {
+        // Error while connecting to the server
+        Err(resp.unwrap_err().to_string())
     }
 }
 
@@ -79,6 +123,12 @@ pub mod responses {
     #[derive(Serialize, Deserialize)]
     pub struct AddNote {
         pub result: Option<usize>,
+        pub error: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct GetNotes {
+        pub result: Option<Vec<usize>>,
         pub error: Option<String>,
     }
 }
@@ -151,6 +201,29 @@ pub mod requests {
     pub struct Fields {
         Front: String,
         Back: String,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct GetNotes {
+        action: &str,
+        version: usize,
+        params: GetNotesParams,
+    }
+
+    impl GetNotes {
+        pub fn build(query: &str) -> GetNotes {
+            let get_notes: GetNotes = GetNotes {
+                action: "findNotes",
+                version: 6,
+                params: GetNotesParams { query },
+            };
+            get_sender().body(to_string(&get_notes).unwrap())
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct GetNotesParams {
+        query: &str,
     }
 
     fn get_sender() -> RequestBuilder {
