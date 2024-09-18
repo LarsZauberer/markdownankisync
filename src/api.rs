@@ -47,17 +47,16 @@ pub fn get_decks() -> Result<Vec<String>, String> {
     }
 }
 
-pub fn get_notes(query: &str) -> Result<Vec<Card>, String> {
-    let resp = requests::GetNotes::build(query).send();
+pub fn get_note_ids(query: &str) -> Result<Vec<usize>, String> {
+    let resp = requests::GetNoteIds::build(query.to_string()).send();
 
     if let Ok(res) = resp {
         // Deserialze response
         let text: &str = &res.text().unwrap();
-        let get_notes_resp: responses::GetNotes =
+        let get_notes_resp: responses::GetNoteIds =
             from_str(text).expect("Failed to read response json to GetNotes struct");
 
         // Check if there is an error in response
-        // FIX: This doesn't throw out a `Card`
         if get_notes_resp.error.is_some() {
             Err(get_notes_resp.error.unwrap().to_string())
         } else {
@@ -69,12 +68,12 @@ pub fn get_notes(query: &str) -> Result<Vec<Card>, String> {
     }
 }
 
-pub fn get_note(query: &str) -> Result<Card, String> {
-    let res: Result<Vec<Card>, String> = get_notes(query);
+pub fn get_note_id(query: &str) -> Result<usize, String> {
+    let res: Result<Vec<usize>, String> = get_note_ids(query);
     if res.is_ok() {
-        let result: Vec<Card> = res.unwrap();
+        let result: Vec<usize> = res.unwrap();
         if result.len() == 1 {
-            Ok(result[0].clone()) // Is it possible without the clone?
+            Ok(result[0]) // Is it possible without the clone?
         } else if result.len() == 0 {
             Err(String::from("404"))
         } else {
@@ -85,29 +84,25 @@ pub fn get_note(query: &str) -> Result<Card, String> {
     }
 }
 
-pub fn get_cards_from_ids(cards: &mut [Card]) -> Result<Vec<Card>, String> {
-    let ids: Vec<usize> = Vec::with_capacity(cards.len());
-    for i in cards {
-        ids.push(i.id);
-    }
-    let resp = requests::GetCardsFromIDs::build(ids).send();
+pub fn get_notes_data(ids: &[usize]) -> Result<Vec<responses::NoteData>, String> {
+    // TODO: Create struct `responses::NoteData`
+    // TODO: Create struct `responses::GetNotesData`
+    // TODO: Create struct `requests::GetNotesData`
+    let query = requests::GetNotesData::build(ids).send();
 
-    if let Ok(res) = resp {
-        // Deserialze response
+    if let Ok(res) = query {
+        // Deserialize
         let text: &str = &res.text().unwrap();
-        let get_notes_resp: responses::GetCardsFromIDs =
-            from_str(text).expect("Failed to read response json to GetCardsFromIDs struct");
-
-        // Check if there is an error in response
+        let get_notes_resp: responses::GetNotesData =
+            from_str(text).expect("Failed to read response json to GetNotesData struct");
         if get_notes_resp.error.is_some() {
             Err(get_notes_resp.error.unwrap().to_string())
         } else {
-            let notes: Vec<CardResponse> = get_notes_resp.unwrap();
-            for i in 0..get_notes_resp.len() {}
+            Ok(get_notes_resp.result.unwrap())
         }
     } else {
         // Error while connecting to the server
-        Err(resp.unwrap_err().to_string())
+        Err(query.unwrap_err().to_string())
     }
 }
 
@@ -127,7 +122,7 @@ pub mod responses {
     }
 
     #[derive(Serialize, Deserialize)]
-    pub struct GetNotes {
+    pub struct GetNoteIds {
         pub result: Option<Vec<usize>>,
         pub error: Option<String>,
     }
@@ -204,16 +199,16 @@ pub mod requests {
     }
 
     #[derive(Serialize, Deserialize)]
-    pub struct GetNotes {
-        action: &str,
+    pub struct GetNoteIds {
+        action: String,
         version: usize,
         params: GetNotesParams,
     }
 
-    impl GetNotes {
-        pub fn build(query: &str) -> GetNotes {
-            let get_notes: GetNotes = GetNotes {
-                action: "findNotes",
+    impl GetNoteIds {
+        pub fn build(query: String) -> RequestBuilder {
+            let get_notes: GetNoteIds = GetNoteIds {
+                action: "findNotes".to_string(),
                 version: 6,
                 params: GetNotesParams { query },
             };
@@ -223,7 +218,7 @@ pub mod requests {
 
     #[derive(Serialize, Deserialize)]
     struct GetNotesParams {
-        query: &str,
+        query: String,
     }
 
     fn get_sender() -> RequestBuilder {
