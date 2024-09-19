@@ -122,6 +122,25 @@ pub fn store_media_file(media: &Image) -> Result<String, String> {
     }
 }
 
+/// Returns only the error if there is one
+pub fn update_note(card: &Card) -> Option<String> {
+    let query = requests::UpdateNote::build(card).send();
+
+    if let Ok(res) = query {
+        let text: &str = &res.text().unwrap();
+        let update_resp: responses::UpdateNote =
+            from_str(text).expect("Failed to read response json to UpdateNote struct");
+        if update_resp.error.is_some() {
+            Some(update_resp.error.unwrap().to_string())
+        } else {
+            None
+        }
+    } else {
+        // Error while connecting to the server
+        Some(query.unwrap_err().to_string())
+    }
+}
+
 pub mod responses {
     use serde::{Deserialize, Serialize};
 
@@ -174,6 +193,12 @@ pub mod responses {
     #[derive(Serialize, Deserialize, Debug)]
     #[allow(non_snake_case)]
     pub struct StoreMediaFile {
+        pub result: Option<String>,
+        pub error: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct UpdateNote {
         pub result: Option<String>,
         pub error: Option<String>,
     }
@@ -323,6 +348,44 @@ pub mod requests {
     struct StoreMediaFileParams {
         filename: String,
         data: String, // Has to be base64
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct UpdateNote {
+        action: String,
+        version: usize,
+        params: UpdateNoteParams,
+    }
+
+    impl UpdateNote {
+        pub fn build(card: &crate::anki::Card) -> RequestBuilder {
+            let update_note = UpdateNote {
+                action: "updateNoteFields".to_string(),
+                version: 6,
+                params: UpdateNoteParams {
+                    note: UpdateNoteNote {
+                        id: card.id,
+                        fields: Fields {
+                            Front: card.front.clone(),
+                            Back: card.back.clone(),
+                        },
+                    },
+                },
+            };
+
+            get_sender().body(to_string(&update_note).unwrap())
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct UpdateNoteParams {
+        note: UpdateNoteNote,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct UpdateNoteNote {
+        id: usize,
+        fields: Fields,
     }
 
     fn get_sender() -> RequestBuilder {
