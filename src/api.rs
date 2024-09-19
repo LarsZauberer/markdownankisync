@@ -2,6 +2,7 @@ use crate::anki::{Card, Image};
 use serde_json::from_str;
 
 pub fn add_note(card: &Card, deck: &str) -> Result<Card, String> {
+    // TODO: Return a response object instead of the card
     let resp = requests::AddNote::build(deck, &card.front, &card.back).send();
 
     if let Ok(res) = resp {
@@ -85,9 +86,6 @@ pub fn get_note_id(query: &str) -> Result<usize, String> {
 }
 
 pub fn get_notes_data(ids: &[usize]) -> Result<Vec<responses::NoteData>, String> {
-    // TODO: Create struct `responses::NoteData`
-    // TODO: Create struct `responses::GetNotesData`
-    // TODO: Create struct `requests::GetNotesData`
     let query = requests::GetNotesData::build(ids).send();
 
     if let Ok(res) = query {
@@ -125,6 +123,34 @@ pub mod responses {
     pub struct GetNoteIds {
         pub result: Option<Vec<usize>>,
         pub error: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct GetNotesData {
+        pub result: Option<Vec<NoteData>>,
+        pub error: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[allow(non_snake_case)]
+    pub struct NoteData {
+        pub noteId: usize,
+        pub modelName: String,
+        pub tags: Vec<String>,
+        pub fields: RespFields,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[allow(non_snake_case)]
+    pub struct RespFields {
+        pub Front: RespField,
+        pub Back: RespField,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct RespField {
+        pub value: String,
+        pub order: usize,
     }
 }
 
@@ -219,6 +245,32 @@ pub mod requests {
     #[derive(Serialize, Deserialize)]
     struct GetNotesParams {
         query: String,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct GetNotesData {
+        action: String,
+        version: usize,
+        params: GetNotesDataParams,
+    }
+
+    impl GetNotesData {
+        pub fn build(ids: &[usize]) -> RequestBuilder {
+            let get_notes: GetNotesData = GetNotesData {
+                action: "notesInfo".to_string(),
+                version: 6,
+                params: GetNotesDataParams {
+                    notes: ids.to_vec(),
+                },
+            };
+
+            get_sender().body(to_string(&get_notes).unwrap())
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct GetNotesDataParams {
+        notes: Vec<usize>,
     }
 
     fn get_sender() -> RequestBuilder {
