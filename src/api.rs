@@ -104,6 +104,24 @@ pub fn get_notes_data(ids: &[usize]) -> Result<Vec<responses::NoteData>, String>
     }
 }
 
+/// The return is the image path in anki or the error
+pub fn store_media_file(media: &Image) -> Result<String, String> {
+    let query = requests::StoreMediaFile::build(media).send();
+    if let Ok(res) = query {
+        let text: &str = &res.text().unwrap();
+        let media_resp: responses::StoreMediaFile =
+            from_str(text).expect("Failed to read response json to StoreMediaFile struct");
+        if media_resp.error.is_some() {
+            Err(media_resp.error.unwrap().to_string())
+        } else {
+            Ok(media_resp.result.unwrap())
+        }
+    } else {
+        // Error while connecting to the server
+        Err(query.unwrap_err().to_string())
+    }
+}
+
 pub mod responses {
     use serde::{Deserialize, Serialize};
 
@@ -151,6 +169,13 @@ pub mod responses {
     pub struct RespField {
         pub value: String,
         pub order: usize,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[allow(non_snake_case)]
+    pub struct StoreMediaFile {
+        pub result: Option<String>,
+        pub error: Option<String>,
     }
 }
 
@@ -271,6 +296,33 @@ pub mod requests {
     #[derive(Serialize, Deserialize)]
     struct GetNotesDataParams {
         notes: Vec<usize>,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct StoreMediaFile {
+        action: String,
+        version: usize,
+        params: StoreMediaFileParams,
+    }
+
+    impl StoreMediaFile {
+        pub fn build(media: &crate::anki::Image) -> RequestBuilder {
+            let store_media = StoreMediaFile {
+                action: "storeMediaFile".to_string(),
+                version: 6,
+                params: StoreMediaFileParams {
+                    filename: media.filename.clone(),
+                    data: media.data.clone(),
+                },
+            };
+            get_sender().body(to_string(&store_media).unwrap())
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct StoreMediaFileParams {
+        filename: String,
+        data: String, // Has to be base64
     }
 
     fn get_sender() -> RequestBuilder {
