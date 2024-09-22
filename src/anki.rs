@@ -7,24 +7,27 @@ pub struct Card {
     pub id: usize,
     pub front: String,
     pub back: String,
-    pub media: Vec<Image>,
+    pub media: Vec<Image>, // Media is only set for updates and never retrieved
 }
 
 impl Card {
     pub fn new(front: &str, back: &str) -> Result<Card, String> {
+        // Extract all the media links
         let mut front_media: Vec<Image> = extract_images(front);
         let mut back_media: Vec<Image> = extract_images(back);
-
         front_media.append(&mut back_media);
 
-        let mut new_card: Card = Card {
+        // Render the card
+        let new_card: Card = Card {
             id: 0,
             front: render(front),
             back: render(back),
             media: front_media,
         };
 
-        // TODO: Send Media data to the Media Store
+        for i in &new_card.media {
+            store_media_file(i);
+        }
 
         add_note(&new_card, "Test")
     }
@@ -32,15 +35,31 @@ impl Card {
         // TODO: Implement
         false
     }
-    pub fn get(id: usize) -> Option<Card> {
-        // TODO: Implement
-        // TODO: Check if even necessary
-        None
+
+    pub fn get_card(id: usize) -> Option<Card> {
+        // Get the card information
+        let information = get_notes_data(&[id; 0]);
+
+        if let Ok(datas) = information {
+            // Check if one card was found
+            if datas.len() == 1 {
+                // Create the card object
+                let data: &responses::NoteData = &datas[0];
+                Some(Card {
+                    id: data.noteId,
+                    front: data.fields.Front.value.clone(),
+                    back: data.fields.Back.value.clone(),
+                    media: Vec::new(),
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
-    pub fn exists(id: usize) -> bool {
-        Self::get(id).is_some()
-        // TODO: Check if even necessary
-    }
+
+    pub fn get_card_from_query(query: &str) -> Option<Card> {}
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
