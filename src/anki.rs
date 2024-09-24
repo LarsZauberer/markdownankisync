@@ -98,8 +98,4 @@ impl Image {
             data: image_base64::to_base64(path_str), // Read the image data and convert it to base64
         }
     }
-
-    pub fn upload_image(&self) {
-        // TODO: Upload image to anki
-    }
 }
