@@ -11,7 +11,7 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str) -> Result<Card, String> {
+    pub fn new(front: &str, back: &str) -> Option<Card> {
         // Extract all the media links
         let mut front_media: Vec<Image> = extract_images(front);
         let mut back_media: Vec<Image> = extract_images(back);
@@ -26,14 +26,26 @@ impl Card {
         };
 
         for i in &new_card.media {
-            store_media_file(i);
+            let _ = store_media_file(i);
         }
 
-        add_note(&new_card, "Test")
+        let card_result = add_note(&new_card, "Test");
+        if let Ok(card) = card_result {
+            Some(card)
+        } else {
+            None
+        }
     }
-    pub fn update_card(&self, front: &str, back: &str) -> bool {
-        // TODO: Implement
-        false
+
+    /// Updates the card in anki with the new front and back.
+    /// It returns false if there was an error and true if it was updated successfully
+    pub fn update_card(&self) -> bool {
+        let resp = update_note(&self);
+        if resp.is_some() {
+            false
+        } else {
+            true
+        }
     }
 
     pub fn get_card(id: usize) -> Option<Card> {
@@ -59,7 +71,18 @@ impl Card {
         }
     }
 
-    pub fn get_card_from_query(query: &str) -> Option<Card> {}
+    pub fn get_card_from_query(query: &str) -> Option<Card> {
+        // Try to get the id
+        let id_resp = get_note_id(query);
+
+        if id_resp.is_err() {
+            // Couldn't find the id
+            return None;
+        }
+
+        // Get card with id
+        Card::get_card(id_resp.unwrap())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
