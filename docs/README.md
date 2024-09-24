@@ -30,15 +30,12 @@ The app will create for all the double card types two seperate basic cards that 
 
 ### Quick Editor
 
-To enable quick writing and editing notes there should be a simple rust rewrite of the Anki editor.
+Reads only the `basic` cards from the markdown wiki and creates cards from it.
 
 Features:
 
-- No media
+- Support only for basic cards
 - Hiragana support
-- Bulk adding notes
-- Editing single notes
-- Card Types
-  - Basic
-  - Input
-  - Reverse
+- Image support
+- Update support
+- From section to next section
