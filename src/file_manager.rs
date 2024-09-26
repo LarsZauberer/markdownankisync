@@ -20,4 +20,24 @@ fn read_file(markdown_file: &str) -> String {
     fs::read_to_string(markdown_file).expect("Should have been able to read the file")
 }
 
-fn get_cards_from_content(content: &str) -> Vec<Card> {}
+fn get_cards_from_content(content: &str) -> Vec<Card> {
+    let mut res: Vec<Vec<Card>> = Vec::with_capacity(4); // Update number if more types are
+                                                         // implemented
+                                                         // Get all the types
+    res.push(get_basic_from_content(content));
+
+    res.concat()
+}
+
+fn get_basic_from_content(content: &str) -> Vec<Card> {
+    use regex::Regex;
+    // Creating regex
+    // The regex captures all headings with a #card tag and goes to the next heading or to the end
+    // of the file.
+    // The id of the card is in an html comment tag -> <!--id:1234-->
+    let re = Regex::new(r"").unwrap();
+
+    // Result card
+    let mut res: Vec<Card> = Vec::new();
+    res
+}
