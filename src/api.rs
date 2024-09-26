@@ -1,8 +1,7 @@
 use crate::anki::{Card, Image};
 use serde_json::from_str;
 
-pub fn add_note(card: &Card, deck: &str) -> Result<Card, String> {
-    // TODO: Return a response object instead of the card
+pub fn add_note(card: &Card, deck: &str) -> Result<usize, String> {
     let resp = requests::AddNote::build(deck, &card.front, &card.back).send();
 
     if let Ok(res) = resp {
@@ -17,10 +16,7 @@ pub fn add_note(card: &Card, deck: &str) -> Result<Card, String> {
         } else {
             // Update card object
             let id: usize = add_note_resp.result.unwrap();
-            let mut new_card: Card = card.clone();
-            new_card.id = id;
-
-            Ok(new_card)
+            Ok(id)
         }
     } else {
         Err(resp.unwrap_err().to_string())

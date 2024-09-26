@@ -11,27 +11,29 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str) -> Option<Card> {
+    pub fn new(front: &str, back: &str, deck: &str) -> Option<Card> {
         // Extract all the media links
         let mut front_media: Vec<Image> = extract_images(front);
         let mut back_media: Vec<Image> = extract_images(back);
         front_media.append(&mut back_media);
 
         // Render the card
-        let new_card: Card = Card {
+        let mut new_card: Card = Card {
             id: 0,
             front: render(front),
             back: render(back),
             media: front_media,
         };
 
+        // Save all the media files
         for i in &new_card.media {
             let _ = store_media_file(i);
         }
 
-        let card_result = add_note(&new_card, "Test");
-        if let Ok(card) = card_result {
-            Some(card)
+        let card_result = add_note(&new_card, deck);
+        if let Ok(id) = card_result {
+            new_card.id = id;
+            Some(new_card)
         } else {
             None
         }
