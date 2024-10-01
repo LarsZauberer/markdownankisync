@@ -11,10 +11,10 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str, deck: &str) -> Option<Card> {
+    pub fn new(front: &str, back: &str, deck: &str, wiki_absolute: &str) -> Option<Card> {
         // Extract all the media links
-        let mut front_media: Vec<Image> = extract_images(front);
-        let mut back_media: Vec<Image> = extract_images(back);
+        let mut front_media: Vec<Image> = extract_images(front, wiki_absolute);
+        let mut back_media: Vec<Image> = extract_images(back, wiki_absolute);
         front_media.append(&mut back_media);
 
         // Render the card
@@ -40,14 +40,24 @@ impl Card {
     }
 
     /// Updates the card in anki with the new front and back.
-    /// It returns false if there was an error and true if it was updated successfully
-    pub fn update_card(&self) -> bool {
-        let resp = update_note(&self);
-        if resp.is_some() {
-            false
-        } else {
-            true
+    /// It returns false if there was an error and true if it was updated successfully.
+    pub fn update_card(&mut self, front: &str, back: &str, wiki_absolute: &str) -> bool {
+        // Extract the image data
+        let mut front_media: Vec<Image> = extract_images(front, wiki_absolute);
+        let mut back_media: Vec<Image> = extract_images(back, wiki_absolute);
+        front_media.append(&mut back_media);
+
+        // Upload the media files to anki
+        for i in &front_media {
+            let _ = store_media_file(i);
         }
+
+        self.front = render(front);
+        self.back = render(back);
+        self.media = front_media;
+
+        let resp = update_note(&self);
+        !resp.is_some()
     }
 
     pub fn get_card(id: usize) -> Option<Card> {
