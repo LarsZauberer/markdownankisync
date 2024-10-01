@@ -22,7 +22,7 @@ pub fn render(text: &str) -> String {
 }
 
 /// Computes all the images stored in a certain text passage and returns all the `Image` Objects
-pub fn extract_images(text: &str) -> Vec<Image> {
+pub fn extract_images(text: &str, wiki_absolute: &str) -> Vec<Image> {
     let mut images: Vec<Image> = Vec::with_capacity(2);
 
     let re = get_image_link_regex();
