@@ -5,15 +5,14 @@ use std::path::Path;
 /// Converts a string to the anki text format
 /// It converts all the image links to html images and converts the latex $ and $$ to correct KaTeX
 /// math equations.
-pub fn render(text: &str) -> String {
+pub fn render(text: &str, wiki_absolute: &str) -> String {
     let mut text: String = text.to_owned();
 
     // Handle images
     text = convert_image_links(&text);
 
     // Handle links
-    // TODO: Make the workspace path variable
-    text = convert_links(&text, "/home/lars/Nextcloud/main-obsidian");
+    text = convert_links(&text, wiki_absolute);
 
     // Math handle
     text = convert_math(&text);

@@ -20,8 +20,8 @@ impl Card {
         // Render the card
         let mut new_card: Card = Card {
             id: 0,
-            front: render(front),
-            back: render(back),
+            front: render(front, wiki_absolute),
+            back: render(back, wiki_absolute),
             media: front_media,
         };
 
@@ -52,8 +52,8 @@ impl Card {
             let _ = store_media_file(i);
         }
 
-        self.front = render(front);
-        self.back = render(back);
+        self.front = render(front, wiki_absolute);
+        self.back = render(back, wiki_absolute);
         self.media = front_media;
 
         let resp = update_note(&self);
