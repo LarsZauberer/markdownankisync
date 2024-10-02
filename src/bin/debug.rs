@@ -1,11 +1,9 @@
-use markdownankisync::api::{get_note_ids, get_notes_data};
+use markdownankisync::file_manager;
 
 fn main() {
-    let ids_result = get_note_ids("deck:Japanisch::Hiragana");
-    let ids = ids_result.expect("Failed to get ids");
-    println!("{:?}", ids);
-
-    let data_resp = get_notes_data(&ids);
-    let data = data_resp.expect("Failed to get data");
-    println!("{:?}", data);
+    let files = file_manager::get_md_files_in_directory("./test_data");
+    for i in files {
+        let text = file_manager::read_file(&i);
+        file_manager::get_cards_from_content(&text);
+    }
 }
