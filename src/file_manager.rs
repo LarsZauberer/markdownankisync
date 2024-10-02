@@ -47,29 +47,37 @@ fn get_basics_from_content(content: &str) -> Vec<Card> {
     // 5: The next heading (should stay)
     let re = Regex::new(r"((?:.*\n)*?)#+ (.+) #card\n\n((?:.*\n)*?)(?:<!--id:(\d+)-->\n\n)?(#+)")
         .unwrap();
-    loop {
-        let ma = re.captures(&text);
 
-        if ma.is_none() {
+    loop {
+        let ma_option = re.captures(&text);
+
+        if ma_option.is_none() {
             break;
         }
 
-        let (_, [before, front, back, id, next]) = ma.unwrap().extract();
+        let ma = ma_option.unwrap();
 
-        text = re.replace(&text, "$1$2").to_string();
-        // Needs some debugging probably
-        println!("{}", text);
-        println!("Id: {}", id);
+        let front = ma.get(2).map_or("", |m| m.as_str());
+        let back = ma.get(3).map_or("", |m| m.as_str());
+        let id = ma.get(4);
 
-        if id == "" {
+        // Cut out all the already solves cards
+        let new_text = re.replace(&text, "$1$5").to_string();
+
+        if id.is_none() {
             // Create new card
             // TODO: Make deck and absolute path variable
             let c = Card::new(front, back, "test", "./test_data");
             if c.is_none() {
                 println!("Error: Couldn't create card");
+            } else {
+                res.push(c.unwrap());
             }
-            res.push(c.unwrap());
+        } else {
+            // TODO: Add update
         }
+
+        text = new_text;
     }
 
     // This regex captures the last card at the end of the file which is not accepted by the other
@@ -82,17 +90,20 @@ fn get_basics_from_content(content: &str) -> Vec<Card> {
     let re2 = Regex::new(r"((?:.*\n)*?)#+ (.+) #card\n\n((?:.*\n)*.*?)(?:(?:<!--id:(\d*)-->)|\z)")
         .unwrap();
     let ma = re2.captures(&text);
-    if ma.is_some() {
-        let (_, [before, front, back, id, next]) = ma.unwrap().extract();
+    if let Some(m) = ma {
+        let front = m.get(2).map_or("", |m| m.as_str());
+        let back = m.get(3).map_or("", |m| m.as_str());
+        let id = m.get(4);
 
-        if id == "" {
+        if id.is_none() {
             // Create new card
             // TODO: Make deck and absolute path variable
             let c = Card::new(front, back, "test", "./test_data");
             if c.is_none() {
                 println!("Error: Couldn't create card");
+            } else {
+                res.push(c.unwrap());
             }
-            res.push(c.unwrap());
         }
     }
 
