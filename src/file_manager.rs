@@ -20,16 +20,19 @@ pub fn read_file(markdown_file: &str) -> String {
     fs::read_to_string(markdown_file).expect("Should have been able to read the file")
 }
 
-pub fn get_cards_from_content(content: &str) -> Vec<Card> {
+pub fn get_cards_from_content(content: &str, wiki_absolute: &str) -> Vec<Card> {
     let mut res: Vec<Vec<Card>> = Vec::with_capacity(4); // Update number if more types are
                                                          // implemented
                                                          // Get all the types
-    res.push(get_basics_from_content(content));
+
+    // TODO: Pass down the CLI instead of wiki_abolute since we need the tags to make to decks
+    let deck = get_deck_name(content);
+    res.push(get_basics_from_content(content, &deck, wiki_absolute));
 
     res.concat()
 }
 
-fn get_basics_from_content(content: &str) -> Vec<Card> {
+fn get_basics_from_content(content: &str, deck: &str, wiki_absolute: &str) -> Vec<Card> {
     use regex::Regex;
 
     let mut text = content.to_owned();
@@ -67,7 +70,7 @@ fn get_basics_from_content(content: &str) -> Vec<Card> {
         if id.is_none() {
             // Create new card
             // TODO: Make deck and absolute path variable
-            let c = Card::new(front, back, "test", "./test_data");
+            let c = Card::new(front, back, deck, wiki_absolute);
             if c.is_none() {
                 println!("Error: Couldn't create card");
             } else {
@@ -98,7 +101,7 @@ fn get_basics_from_content(content: &str) -> Vec<Card> {
         if id.is_none() {
             // Create new card
             // TODO: Make deck and absolute path variable
-            let c = Card::new(front, back, "test", "./test_data");
+            let c = Card::new(front, back, deck, wiki_absolute);
             if c.is_none() {
                 println!("Error: Couldn't create card");
             } else {
@@ -108,4 +111,8 @@ fn get_basics_from_content(content: &str) -> Vec<Card> {
     }
 
     res
+}
+
+fn get_deck_name(content: &str) -> String {
+    "test".to_string()
 }
