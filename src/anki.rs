@@ -4,96 +4,75 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Card {
-    pub id: usize,
+    pub id: usize, // By default if the id has no value, it gets the default value 0
     pub front: String,
     pub back: String,
-    pub media: Vec<Image>, // Media is only set for updates and never retrieved
+    pub deck: String,
+    media: Vec<Image>,
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str, deck: &str, wiki_absolute: &str) -> Option<Card> {
-        // Extract all the media links
-        let mut front_media: Vec<Image> = extract_images(front, wiki_absolute);
-        let mut back_media: Vec<Image> = extract_images(back, wiki_absolute);
-        front_media.append(&mut back_media);
+    pub fn new(
+        id: Option<usize>,
+        front: String,
+        back: String,
+        deck: String,
+        wiki_abosulte: &str,
+    ) -> Card {
+        let mut image_paths: Vec<Image> = extract_images(&front, wiki_abosulte);
+        image_paths.append(&mut extract_images(&back, wiki_abosulte));
 
-        // Render the card
-        let mut new_card: Card = Card {
-            id: 0,
-            front: render(front, wiki_absolute),
-            back: render(back, wiki_absolute),
-            media: front_media,
-        };
-
-        // Save all the media files
-        for i in &new_card.media {
-            let _ = store_media_file(i);
-        }
-
-        let card_result = add_note(&new_card, deck);
-        if let Ok(id) = card_result {
-            new_card.id = id;
-            Some(new_card)
-        } else {
-            None
+        Card {
+            id: id.unwrap_or_else(|| 0),
+            front,
+            back,
+            deck,
+            media: image_paths,
         }
     }
 
-    /// Updates the card in anki with the new front and back.
-    /// It returns false if there was an error and true if it was updated successfully.
-    pub fn update_card(&mut self, front: &str, back: &str, wiki_absolute: &str) -> bool {
-        // Extract the image data
-        let mut front_media: Vec<Image> = extract_images(front, wiki_absolute);
-        let mut back_media: Vec<Image> = extract_images(back, wiki_absolute);
-        front_media.append(&mut back_media);
+    pub fn upload(&mut self) -> bool {
+        if self.id == 0 {
+            let res_id = self.create_anki_card();
 
-        // Upload the media files to anki
-        for i in &front_media {
-            let _ = store_media_file(i);
-        }
-
-        self.front = render(front, wiki_absolute);
-        self.back = render(back, wiki_absolute);
-        self.media = front_media;
-
-        let resp = update_note(&self);
-        !resp.is_some()
-    }
-
-    pub fn get_card(id: usize) -> Option<Card> {
-        // Get the card information
-        let information = get_notes_data(&[id; 0]);
-
-        if let Ok(datas) = information {
-            // Check if one card was found
-            if datas.len() == 1 {
-                // Create the card object
-                let data: &responses::NoteData = &datas[0];
-                Some(Card {
-                    id: data.noteId,
-                    front: data.fields.Front.value.clone(),
-                    back: data.fields.Back.value.clone(),
-                    media: Vec::new(),
-                })
+            if let Ok(id) = res_id {
+                self.id = id;
+                true // return success
             } else {
-                None
+                false // return failure
             }
         } else {
-            None
+            self.update_anki_card()
         }
     }
 
-    pub fn get_card_from_query(query: &str) -> Option<Card> {
-        // Try to get the id
-        let id_resp = get_note_id(query);
+    fn create_anki_card(&self) -> Result<usize, String> {
+        // Preconditions
+        assert!(self.front.len() != 0 && self.back.len() != 0);
 
-        if id_resp.is_err() {
-            // Couldn't find the id
-            return None;
+        self.upload_media();
+        add_note(self, &self.deck)
+    }
+
+    fn update_anki_card(&self) -> bool {
+        // Preconditions
+        assert!(self.id != 0);
+        assert!(self.front.len() != 0 && self.back.len() != 0);
+
+        self.upload_media();
+        let res = update_note(self);
+
+        res.is_none()
+    }
+
+    fn upload_media(&self) -> bool {
+        for i in &self.media {
+            let res = store_media_file(i);
+            if res.is_err() {
+                return false;
+            }
         }
-
-        // Get card with id
-        Card::get_card(id_resp.unwrap())
+        true // return success
     }
 }
 
