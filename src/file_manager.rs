@@ -20,19 +20,51 @@ pub fn read_file(markdown_file: &str) -> String {
     fs::read_to_string(markdown_file).expect("Should have been able to read the file")
 }
 
-pub fn get_cards_from_content(content: &str, wiki_absolute: &str) -> Vec<Card> {
+pub fn get_cards_from_content(content: &str, cli: &crate::tui::CLI) -> Vec<Card> {
     let mut res: Vec<Vec<Card>> = Vec::with_capacity(4); // Update number if more types are
                                                          // implemented
                                                          // Get all the types
+                                                         // It doesn't care if there are multiple decks in this note file
 
-    // TODO: Pass down the CLI instead of wiki_abolute since we need the tags to make to decks
-    let deck = get_deck_name(content);
-    res.push(get_basics_from_content(content, &deck, wiki_absolute));
+    let tags = get_tags(content);
+    for tag in cli.get_tags() {
+        if tags.contains(&tag.to_string()) {
+            continue;
+        };
+
+        // res.push(get_basics_from_content(content, tag, &cli.wiki_absolute));
+    }
 
     res.concat()
 }
 
-fn get_basics_from_content(content: &str, deck: &str, wiki_absolute: &str) -> Vec<Card> {
+pub fn get_tags(content: &str) -> Vec<String> {
+    use regex::Regex;
+
+    let re = Regex::new(r"(tags:\n)  - (\w+)").unwrap();
+    let mut res: Vec<String> = Vec::with_capacity(2);
+    let mut text: String = content.to_string();
+
+    loop {
+        let ma = re.captures(&text);
+        if ma.is_none() {
+            break;
+        }
+
+        let m = ma.unwrap();
+
+        res.push(m.get(2).map_or("", |m| m.as_str()).to_string());
+
+        // Clear the first tag entry to search for the next one
+        // FIX: there is a problem that the suffix \n of the extracted tag is not deleted. Example
+        // "tags:\n  - Analysis\n..." becomes "tags:\n\n..."
+        text = re.replace(&text, "$1").to_string();
+    }
+
+    res
+}
+
+/* fn get_basics_from_content(content: &str, deck: &str, wiki_absolute: &str) -> Vec<Card> {
     use regex::Regex;
 
     let mut text = content.to_owned();
@@ -60,7 +92,7 @@ fn get_basics_from_content(content: &str, deck: &str, wiki_absolute: &str) -> Ve
 
         let ma = ma_option.unwrap();
 
-        let front = ma.get(2).map_or("", |m| m.as_str());
+        let front = ma.get(2).map_or("", |m| m.as_str()); // FIX: Better problem/error handling
         let back = ma.get(3).map_or("", |m| m.as_str());
         let id = ma.get(4);
 
@@ -111,8 +143,4 @@ fn get_basics_from_content(content: &str, deck: &str, wiki_absolute: &str) -> Ve
     }
 
     res
-}
-
-fn get_deck_name(content: &str) -> String {
-    "test".to_string()
-}
+} */

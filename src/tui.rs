@@ -1,18 +1,21 @@
-pub mod CLI {
-    use clap::Parser;
+use clap::Parser;
 
-    #[derive(Parser, Debug)]
-    #[command(version)]
-    pub struct CLI {
-        /// Start the application in the simple quick editor mode
-        #[arg(short = 'q', long = "quick", default_value_t = false)]
-        pub quick: bool,
+#[derive(Parser, Debug)]
+#[command(version)]
+pub struct CLI {
+    /// The **absolute** path to the wiki directory
+    #[arg(short='p', long="path", default_value_t = String::from(""))]
+    pub wiki_absolute: String,
 
-        /// The filter argument searches for a certain note. The filter has to be a valid Anki
-        /// search string.
-        /// The filter argument is only used if the `quick` mode is active. If the filter argument
-        /// is empty the quick mode will automatically be set to bulk add
-        #[arg(short='f', long="filter", default_value_t = String::from(""))]
-        pub filter: String,
+    #[arg(short='t', long="tags", default_value_t = String::from(""))]
+    tags: String,
+
+    #[arg(short = 'd', long = "dry-run", default_value_t = false)]
+    dry_run: bool,
+}
+
+impl CLI {
+    pub fn get_tags(&self) -> Vec<&str> {
+        self.tags.split(',').collect()
     }
 }
