@@ -41,7 +41,7 @@ pub fn get_cards_from_content(content: &str, cli: &crate::tui::CLI) -> Vec<Card>
 pub fn get_tags(content: &str) -> Vec<String> {
     use regex::Regex;
 
-    let re = Regex::new(r"(tags:\n)  - (\w+)").unwrap();
+    let re = Regex::new(r"(tags:\n)  - (\w+)\n").unwrap();
     let mut res: Vec<String> = Vec::with_capacity(2);
     let mut text: String = content.to_string();
 
@@ -56,8 +56,6 @@ pub fn get_tags(content: &str) -> Vec<String> {
         res.push(m.get(2).map_or("", |m| m.as_str()).to_string());
 
         // Clear the first tag entry to search for the next one
-        // FIX: there is a problem that the suffix \n of the extracted tag is not deleted. Example
-        // "tags:\n  - Analysis\n..." becomes "tags:\n\n..."
         text = re.replace(&text, "$1").to_string();
     }
 

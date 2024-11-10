@@ -9,6 +9,7 @@ aliases:
   - Open Set
 tags:
   - Analysis
+  - LinAlg
 ---
 
 # Eigenschaften von Teilmengen (Subsets)
