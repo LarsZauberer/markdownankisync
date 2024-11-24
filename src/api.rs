@@ -1,8 +1,8 @@
 use crate::anki::{Card, Image};
 use serde_json::from_str;
 
-pub fn add_note(card: &Card, deck: &str) -> Result<usize, String> {
-    let resp = requests::AddNote::build(deck, &card.front, &card.back).send();
+pub fn add_note(card: &Card, deck: &str, model: &str) -> Result<usize, String> {
+    let resp = requests::AddNote::build(deck, &card.front, &card.back, model).send();
 
     if let Ok(res) = resp {
         // Deserialize response
@@ -230,14 +230,14 @@ pub mod requests {
     }
 
     impl AddNote {
-        pub fn build(deck: &str, front: &str, back: &str) -> RequestBuilder {
+        pub fn build(deck: &str, front: &str, back: &str, model: &str) -> RequestBuilder {
             let add_note: AddNote = AddNote {
                 action: "addNote".to_string(),
                 version: 6,
                 params: AddNoteParams {
                     note: AddNoteParamsNote {
                         deckName: deck.to_string(),
-                        modelName: "Basic".to_string(),
+                        modelName: model.to_string(),
                         fields: Fields {
                             Front: front.to_string(),
                             Back: back.to_string(),

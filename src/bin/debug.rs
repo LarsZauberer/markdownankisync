@@ -5,7 +5,7 @@ fn main() {
     for i in files {
         let text = file_manager::read_file(&i);
         // file_manager::get_cards_from_content(&text);
-        let tags = file_manager::get_tags(&text);
-        println!("{:?}", tags);
+        // let tags = file_manager::get_tags(&text);
+        // println!("{:?}", tags);
     }
 }

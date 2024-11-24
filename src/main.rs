@@ -1,22 +1,21 @@
 use clap::Parser;
-use markdownankisync::anki::Card;
-use markdownankisync::tui::CLI::CLI;
-use markdownankisync::{api::get_decks, renderer::render};
+use markdownankisync::file_manager;
+use markdownankisync::tui::CLI;
 
 fn main() {
     let cli: CLI = CLI::parse();
 
-    // Since the nothing except the quick mode is implemented yet. It will force the quick mode to
-    // be used
-    if cli.filter.len() > 0 {
-        search_edit(&cli.filter);
-    } else {
-        bulk_add();
+    let file_paths = file_manager::get_md_files_in_directory(&cli.wiki_absolute);
+
+    println!("Tags allowed: {:?}", cli.get_tags());
+
+    for file in file_paths {
+        println!("Loading file {}", file);
+        let mut content: String = file_manager::read_file(&file);
+        content = file_manager::create_cards_from_content(&content, &cli);
+        // println!("New file content:\n{}", content);
+        if !file_manager::write_file(&file, &content) {
+            panic!("Error writing back the file");
+        }
     }
 }
-
-fn bulk_add() {
-    println!("Not implemented yet");
-}
-
-fn search_edit(filter: &str) {}
