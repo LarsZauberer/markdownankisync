@@ -76,6 +76,7 @@ fn create_inline_reverse_from_content(content: &str, deck: &str, wiki_absolute: 
 
     let mut text = content.to_owned();
 
+    // BUG: The regex probably doesn't recongnize the finale line
     let re = Regex::new(r"(.*):::(.*?)(?:\n| (?:<!--id1:(\d+)--> <!--id2:(\d+)-->\n))").unwrap();
 
     for ma in re.captures_iter(&content) {
@@ -95,8 +96,8 @@ fn create_inline_reverse_from_content(content: &str, deck: &str, wiki_absolute: 
 
         let mut right_card = Card::new(
             id_str_2,
-            back,
-            front,
+            back.clone(),
+            front.clone(),
             deck.to_string(),
             wiki_absolute,
             "Basic (type in the answer)",
@@ -110,16 +111,17 @@ fn create_inline_reverse_from_content(content: &str, deck: &str, wiki_absolute: 
         // Add id information
         let total_match = ma.get(0).expect("Invalid match");
 
-        // Save the unmodified file before modifying
-        let unmodified = text.clone();
-
         // Assemble the new file information
-        text = unmodified[0..total_match.start()].to_string();
-        text.push_str(&format!(
-            "{}:::{} <!--id1:{}--> <!--id2:{}-->",
-            &left_card.front, &left_card.back, left_card.id, right_card.id
-        ));
-        text.push_str(&unmodified[total_match.end()..])
+        text = utility::double_inject_comment_attribute(
+            text,
+            &format!("{}:::{}", front, back),
+            "id1",
+            "id2",
+            &format!("{}", left_card.id),
+            &format!("{}", right_card.id),
+            total_match.start(),
+            total_match.end(),
+        )
     }
 
     text
@@ -220,6 +222,163 @@ mod utility {
             None
         } else {
             Some(id_usize.unwrap())
+        }
+    }
+
+    pub fn inject_comment_attribute(
+        content: String,
+        normal_content: &str,
+        attribute_name: &str,
+        value: &str,
+        start: usize,
+        end: usize,
+    ) -> String {
+        let mut suffix = "";
+        // Check if last character is a \n Character. If yes we need to keep it
+        if content.chars().nth(end - 1).unwrap() == '\n' {
+            suffix = "\n";
+        }
+        let before = content[0..start].to_string();
+        let after = content[end..].to_string();
+
+        // Assemble the new string
+        return before
+            + &format!(
+                "{} <!--{}:{}-->{}",
+                normal_content, attribute_name, value, suffix
+            )
+            + &after;
+    }
+
+    pub fn double_inject_comment_attribute(
+        content: String,
+        normal_content: &str,
+        attribute_name1: &str,
+        attribute_name2: &str,
+        value1: &str,
+        value2: &str,
+        start: usize,
+        end: usize,
+    ) -> String {
+        let mut suffix = "";
+        // Check if last character is a \n Character. If yes we need to keep it
+        if content.chars().nth(end - 1).unwrap() == '\n' {
+            suffix = "\n";
+        }
+        let before = content[0..start].to_string();
+        let after = content[end..].to_string();
+
+        // Assemble the new string
+        return before
+            + &format!(
+                "{} <!--{}:{}--> <!--{}:{}-->{}",
+                normal_content, attribute_name1, value1, attribute_name2, value2, suffix
+            )
+            + &after;
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn comment_injection_test_no_new_line() {
+            let mut text = "asdf:::asdf".to_string();
+            text = inject_comment_attribute(
+                text,
+                "asdf:::asdf",
+                "id1",
+                "1234567890101111314151617181920",
+                0,
+                11,
+            );
+            assert_eq!(
+                text,
+                "asdf:::asdf <!--id1:1234567890101111314151617181920-->",
+            );
+        }
+
+        #[test]
+        fn comment_injection_test_with_new_line() {
+            let mut text = "asdf:::asdf\n".to_string();
+            text = inject_comment_attribute(
+                text,
+                "asdf:::asdf",
+                "id1",
+                "1234567890101111314151617181920",
+                0,
+                12,
+            );
+            assert_eq!(
+                text,
+                "asdf:::asdf <!--id1:1234567890101111314151617181920-->\n",
+            );
+        }
+
+        #[test]
+        fn comment_double_injection_test_regex() {
+            let text = "asdf:::asdf\n".to_string();
+            let re =
+                regex::Regex::new(r"(.*):::(.*?)(?:\n| (?:<!--id1:(\d+)--> <!--id2:(\d+)-->\n))")
+                    .unwrap();
+            let mut new_text = text.clone();
+            for ma in re.captures_iter(&text) {
+                let front = ma.get(1).map_or("", |m| m.as_str()).to_string();
+                let back = ma.get(2).map_or("", |m| m.as_str()).to_string();
+
+                let total_match = ma.get(0).expect("Invalid match");
+
+                assert_eq!(total_match.start(), 0);
+                assert_eq!(total_match.end(), text.len());
+
+                new_text = double_inject_comment_attribute(
+                    new_text,
+                    &format!("{}:::{}", front, back),
+                    "id1",
+                    "id2",
+                    "1234567890101111314151617181920",
+                    "1234567890101111314151617181920",
+                    total_match.start(),
+                    total_match.end(),
+                );
+                assert_eq!(
+                    new_text,
+                    "asdf:::asdf <!--id1:1234567890101111314151617181920--> <!--id2:1234567890101111314151617181920-->\n",
+                );
+            }
+        }
+
+        #[test]
+        fn comment_double_injection_test_regex_before_and_after() {
+            let text = "before\nasdf:::asdf\nafter".to_string();
+            let re =
+                regex::Regex::new(r"(.*):::(.*?)(?:\n| (?:<!--id1:(\d+)--> <!--id2:(\d+)-->\n))")
+                    .unwrap();
+            let mut new_text = text.clone();
+            for ma in re.captures_iter(&text) {
+                let front = ma.get(1).map_or("", |m| m.as_str()).to_string();
+                let back = ma.get(2).map_or("", |m| m.as_str()).to_string();
+
+                let total_match = ma.get(0).expect("Invalid match");
+
+                assert_eq!(total_match.start(), 7);
+                assert_eq!(total_match.end(), 19);
+
+                new_text = double_inject_comment_attribute(
+                    new_text,
+                    &format!("{}:::{}", front, back),
+                    "id1",
+                    "id2",
+                    "1234567890101111314151617181920",
+                    "1234567890101111314151617181920",
+                    total_match.start(),
+                    total_match.end(),
+                );
+                assert_eq!(
+                    new_text,
+                    "before\nasdf:::asdf <!--id1:1234567890101111314151617181920--> <!--id2:1234567890101111314151617181920-->\nafter",
+                );
+            }
         }
     }
 }
