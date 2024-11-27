@@ -108,15 +108,18 @@ fn create_inline_reverse_from_content(content: &str, deck: &str, wiki_absolute: 
         right_card.upload();
 
         // Add id information
-        text = re
-            .replace(
-                &text,
-                format!(
-                    "$1:::$2 <!--id1:{}--> <!--id2:{}-->\n",
-                    left_card.id, right_card.id
-                ),
-            )
-            .to_string();
+        let total_match = ma.get(0).expect("Invalid match");
+
+        // Save the unmodified file before modifying
+        let unmodified = text.clone();
+
+        // Assemble the new file information
+        text = unmodified[0..total_match.start()].to_string();
+        text.push_str(&format!(
+            "{}:::{} <!--id1:{}--> <!--id2:{}-->",
+            &left_card.front, &left_card.back, left_card.id, right_card.id
+        ));
+        text.push_str(&unmodified[total_match.end()..])
     }
 
     text
