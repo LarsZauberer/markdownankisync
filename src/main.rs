@@ -3,6 +3,7 @@ use markdownankisync::file_manager;
 use markdownankisync::tui::CLI;
 
 fn main() {
+    env_logger::init();
     let cli: CLI = CLI::parse();
 
     let file_paths = file_manager::get_md_files_in_directory(&cli.wiki_absolute);
