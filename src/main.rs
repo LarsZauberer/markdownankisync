@@ -9,7 +9,7 @@ fn main() {
 
     println!("Tags allowed: {:?}", cli.get_tags());
 
-    for file in file_paths {
+    /* for file in file_paths {
         println!("Loading file {}", file);
         let mut content: String = file_manager::read_file(&file);
         content = file_manager::create_cards_from_content(&content, &cli);
@@ -17,5 +17,5 @@ fn main() {
         if !file_manager::write_file(&file, &content) {
             panic!("Error writing back the file");
         }
-    }
+    } */
 }
