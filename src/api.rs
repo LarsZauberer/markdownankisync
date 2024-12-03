@@ -1,6 +1,11 @@
 use crate::anki::{Card, Image};
 use serde_json::from_str;
 
+pub enum AnkiError {
+    Duplicate,
+    DeckNotFound,
+}
+
 pub fn add_note(card: &Card, deck: &str, model: &str) -> Result<usize, String> {
     let resp = requests::AddNote::build(deck, &card.front, &card.back, model).send();
 

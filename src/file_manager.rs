@@ -52,15 +52,31 @@ impl File {
         }
     }
 
-    pub fn replace(&mut self, replacement: &str, start: usize, end: usize) -> i32 {
+    pub fn replace(&mut self, replacement: &str, start: i32, end: i32) -> i32 {
         assert!(
             self.content.is_some(),
             "The content is null and therefore cannot be replaced"
         );
+
         let content = self.content.clone().unwrap();
-        self.content = Some(content[0..start].to_owned() + replacement + &content[end..]);
-        let length_before: usize = end - start;
-        replacement.len() as i32 - length_before as i32
+
+        assert!(start >= 0 && start < content.len() as i32);
+        assert!(end >= 0 && end <= content.len() as i32);
+
+        let ustart: usize = start as usize;
+        let uend: usize = end as usize;
+
+        self.content = Some(content[0..ustart].to_owned() + replacement + &content[uend..]);
+        let length_before: i32 = end - start;
+        replacement.len() as i32 - length_before
+    }
+
+    pub fn contains_tag(&self, tag: &str) -> bool {
+        assert!(self.is_tags_loaded(), "Tags are not loaded yet");
+
+        let tags: &Vec<String> = self.get_tags().unwrap();
+
+        tags.contains(&tag.to_owned())
     }
 
     // Getter
@@ -89,6 +105,10 @@ impl File {
     pub fn is_content_loaded(&self) -> bool {
         self.content.is_some()
     }
+
+    pub fn is_tags_loaded(&self) -> bool {
+        self.tags.is_some()
+    }
 }
 
 pub fn get_md_files_in_directory(directory: &str) -> Vec<File> {
@@ -116,6 +136,14 @@ mod tests {
         assert_eq!(file.get_file_path(), "data/some_file.md");
         assert_eq!(file.get_content(), None);
         assert_eq!(file.get_tags(), None);
+    }
+
+    #[test]
+    fn test_read_sucess() {
+        let mut file: File = File::new(String::from("test_data/line.md"));
+        assert!(file.read(), "Successfully read file");
+        assert!(file.get_content().is_some());
+        assert_eq!(file.get_content().unwrap(), "asdf\n")
     }
 
     #[test]
@@ -158,5 +186,24 @@ mod tests {
             "Some:::Some32\nTest:::Test\nfdsa:::fdsa2\n"
         );
         assert_eq!(size_change, -1);
+    }
+
+    #[test]
+    fn test_contains_tag_success() {
+        let mut file: File = File::new(String::from("test_data/vocabulary.md"));
+        assert!(file.read(), "Couldn't load test file");
+        assert!(file.load_tags(), "Couldn't load tags");
+
+        let tags = file.get_tags();
+        assert!(tags.is_some());
+        assert_eq!(
+            tags.unwrap(),
+            &vec!["Japanese".to_owned(), "Test".to_owned()]
+        );
+
+        // Test contains
+        assert!(file.contains_tag("Japanese"));
+        assert!(file.contains_tag("Test"));
+        assert!(!file.contains_tag("Test2"));
     }
 }

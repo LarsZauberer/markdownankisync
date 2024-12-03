@@ -46,10 +46,25 @@ impl Card {
                 self.id = id;
                 true // return success
             } else {
+                log::error!(
+                    "Error while uploading new card {:?}\nError: {}",
+                    self,
+                    res_id.unwrap_err()
+                );
                 false // return failure
             }
         } else {
-            self.update_anki_card()
+            let err_box = self.update_anki_card();
+            if err_box.is_some() {
+                log::error!(
+                    "Error while updating card {:?}\nError: {}",
+                    self,
+                    err_box.unwrap()
+                );
+                false
+            } else {
+                true
+            }
         }
     }
 
@@ -57,7 +72,7 @@ impl Card {
         // Preconditions
         assert!(
             self.front.len() != 0 && self.back.len() != 0,
-            "{}:::{} - Model: {}",
+            "Assertion: {}:::{} (Model: {}) <- is empty",
             self.front,
             self.back,
             self.model,
@@ -67,7 +82,7 @@ impl Card {
         add_note(self, &self.deck, &self.model)
     }
 
-    fn update_anki_card(&self) -> bool {
+    fn update_anki_card(&self) -> Option<String> {
         // Preconditions
         assert!(self.id != 0);
         assert!(
@@ -80,8 +95,7 @@ impl Card {
 
         self.upload_media();
 
-        let res = update_note(self);
-        res.is_none()
+        update_note(self)
     }
 
     fn upload_media(&self) -> bool {
