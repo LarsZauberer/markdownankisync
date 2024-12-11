@@ -118,7 +118,7 @@ pub fn get_md_files_in_directory(directory: &str) -> Vec<File> {
     for i in read_dir_res {
         let path = i.unwrap().path();
         // Check if mark down file
-        if path.is_file() && path.extension().unwrap() == "md" {
+        if path.is_file() && path.extension().is_some() && path.extension().unwrap() == "md" {
             res.push(File::new(path.display().to_string()));
         }
     }
